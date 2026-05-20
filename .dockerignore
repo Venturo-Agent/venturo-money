@@ -1,0 +1,15 @@
+# Source / 中間檔不進 image
+.git
+.gitignore
+README.md
+supabase/
+config.js
+icons/icon-page.html
+icons/icon-maskable-page.html
+icons/icon-source.svg
+icons/icon-maskable.svg
+icons/favicon-16.png
+icons/favicon-32.png
+*.log
+.DS_Store
+.trae/
