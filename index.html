@@ -6,8 +6,19 @@
 <meta name="theme-color" content="#1A1814" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="漫途記帳" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="application-name" content="漫途記帳" />
 <title>漫途記帳 · Venturo Ledger</title>
 <meta name="description" content="漫途公司內部記帳 — 個人 / 公司雙模式、Supabase 雲端同步" />
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico" />
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1451,6 +1462,15 @@ function updateTime() {
 }
 updateTime();
 setInterval(updateTime, 30000);
+
+// ─────── Service Worker（PWA · 離線快取 + 安裝到主畫面）───────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.warn('SW register fail:', err));
+  });
+}
 
 </script>
 

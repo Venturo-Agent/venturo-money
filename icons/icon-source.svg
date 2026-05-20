@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 漫途記帳 · App icon · 墨黑底 + 漫途紅「漫」字 -->
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#2A2722"/>
+      <stop offset="60%" stop-color="#1A1814"/>
+      <stop offset="100%" stop-color="#0F0D0A"/>
+    </radialGradient>
+    <radialGradient id="warm" cx="80%" cy="80%" r="50%">
+      <stop offset="0%" stop-color="#8B2A1B" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#8B2A1B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 背景（圓角自動由 OS / maskable safe area 處理）-->
+  <rect x="0" y="0" width="512" height="512" fill="url(#bg)"/>
+  <rect x="0" y="0" width="512" height="512" fill="url(#warm)"/>
+
+  <!-- 漫途紅「漫」字 — 走思源宋體粗體 -->
+  <text x="256" y="328"
+        font-family="Noto Serif TC, PingFang TC, serif"
+        font-size="320"
+        font-weight="700"
+        fill="#8B2A1B"
+        text-anchor="middle"
+        letter-spacing="-12">漫</text>
+
+  <!-- 底部 mono 標示 -->
+  <text x="256" y="430"
+        font-family="JetBrains Mono, monospace"
+        font-size="32"
+        font-weight="600"
+        fill="#B58E3F"
+        text-anchor="middle"
+        letter-spacing="8">LEDGER</text>
+
+  <!-- 框內裝飾分隔點 -->
+  <circle cx="256" cy="465" r="3" fill="#8A7F70" opacity="0.6"/>
+</svg>

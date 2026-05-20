@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- maskable 版：安全區域內縮 20%、外圍 padding 給 OS 切圓 -->
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#2A2722"/>
+      <stop offset="60%" stop-color="#1A1814"/>
+      <stop offset="100%" stop-color="#0F0D0A"/>
+    </radialGradient>
+    <radialGradient id="warm" cx="80%" cy="80%" r="50%">
+      <stop offset="0%" stop-color="#8B2A1B" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#8B2A1B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="512" height="512" fill="url(#bg)"/>
+  <rect x="0" y="0" width="512" height="512" fill="url(#warm)"/>
+
+  <!-- 內容 80% 安全區域、字小一點 -->
+  <text x="256" y="312"
+        font-family="Noto Serif TC, PingFang TC, serif"
+        font-size="240"
+        font-weight="700"
+        fill="#8B2A1B"
+        text-anchor="middle">漫</text>
+
+  <text x="256" y="382"
+        font-family="JetBrains Mono, monospace"
+        font-size="22"
+        font-weight="600"
+        fill="#B58E3F"
+        text-anchor="middle"
+        letter-spacing="6">LEDGER</text>
+</svg>
