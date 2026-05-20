@@ -7,7 +7,7 @@ WORKDIR /usr/share/nginx/html
 COPY index.html ./
 COPY manifest.json ./
 COPY sw.js ./
-COPY favicon.ico ./
+COPY favicon.png ./
 COPY icons/ ./icons/
 COPY config.template.js /tmp/config.template.js
 COPY nginx.conf /etc/nginx/conf.d/default.conf
