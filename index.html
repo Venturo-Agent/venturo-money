@@ -170,7 +170,8 @@
   /* ─────────────────────────────── AUTH SCREEN ─────────────────────────────── */
   .auth-wrap {
     flex: 1;
-    padding: 32px 28px 40px;
+    /* 頂部 + Dynamic Island / 狀態列 safe area */
+    padding: calc(32px + env(safe-area-inset-top, 0)) 28px calc(40px + env(safe-area-inset-bottom, 0));
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -314,13 +315,15 @@
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
-    padding-bottom: 120px;
+    /* 底部 FAB 60 + safe-area-inset-bottom（home indicator）*/
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0));
     scrollbar-width: none;
   }
   .scroll::-webkit-scrollbar { display: none; }
 
   .topbar {
-    padding: 8px 20px 14px;
+    /* 頂部 + Dynamic Island / 狀態列 safe area */
+    padding: calc(8px + env(safe-area-inset-top, 0)) 20px 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -761,7 +764,7 @@
   .fab {
     position: absolute;
     right: 18px;
-    bottom: 28px;
+    bottom: calc(28px + env(safe-area-inset-bottom, 0));
     z-index: 9;
     width: 60px; height: 60px;
     border-radius: 50%;
