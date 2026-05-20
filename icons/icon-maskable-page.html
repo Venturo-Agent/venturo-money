@@ -3,25 +3,24 @@
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
 <style>
-  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: transparent; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #1A1814; }
   .icon-wrap { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
-  svg { width: 100%; height: 100%; display: block; }
+  svg { width: 100%; height: 100%; display: block; background: #1A1814; }
 </style>
 </head><body>
 <div class="icon-wrap">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet">
-    <defs>
-      <radialGradient id="bg" cx="30%" cy="20%" r="80%">
-        <stop offset="0%" stop-color="#2A2722"/>
-        <stop offset="60%" stop-color="#1A1814"/>
-        <stop offset="100%" stop-color="#0F0D0A"/>
-      </radialGradient>
-    </defs>
-    <rect x="0" y="0" width="512" height="512" fill="url(#bg)"/>
-    <text x="256" y="312" font-family="'Noto Serif TC', serif" font-size="240" font-weight="900" fill="#8B2A1B" text-anchor="middle">漫</text>
-    <text x="256" y="382" font-family="'JetBrains Mono', monospace" font-size="22" font-weight="600" fill="#B58E3F" text-anchor="middle" letter-spacing="6">LEDGER</text>
+    <!-- 純色底 -->
+    <rect x="0" y="0" width="512" height="512" fill="#1A1814"/>
+    <!-- 「漫」字：font 180、更小、maskable safe zone 60% 內、Android shape mask 也不會切 -->
+    <text x="256" y="318"
+          font-family="'Noto Serif TC', serif"
+          font-size="180"
+          font-weight="900"
+          fill="#8B2A1B"
+          text-anchor="middle">漫</text>
   </svg>
 </div>
 </body></html>

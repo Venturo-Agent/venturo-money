@@ -3,30 +3,32 @@
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
 <style>
-  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: transparent; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #1A1814; }
   .icon-wrap { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
-  svg { width: 100%; height: 100%; display: block; }
+  svg { width: 100%; height: 100%; display: block; background: #1A1814; }
 </style>
 </head><body>
 <div class="icon-wrap">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet">
     <defs>
-      <radialGradient id="bg" cx="30%" cy="20%" r="80%">
-        <stop offset="0%" stop-color="#2A2722"/>
-        <stop offset="60%" stop-color="#1A1814"/>
-        <stop offset="100%" stop-color="#0F0D0A"/>
-      </radialGradient>
-      <radialGradient id="warm" cx="80%" cy="80%" r="50%">
-        <stop offset="0%" stop-color="#8B2A1B" stop-opacity="0.35"/>
+      <radialGradient id="warm" cx="80%" cy="80%" r="55%">
+        <stop offset="0%" stop-color="#8B2A1B" stop-opacity="0.32"/>
         <stop offset="100%" stop-color="#8B2A1B" stop-opacity="0"/>
       </radialGradient>
     </defs>
-    <rect x="0" y="0" width="512" height="512" fill="url(#bg)"/>
+    <!-- 純色底（確保沒透明）-->
+    <rect x="0" y="0" width="512" height="512" fill="#1A1814"/>
+    <!-- 紅色暈染（不透明處仍有底）-->
     <rect x="0" y="0" width="512" height="512" fill="url(#warm)"/>
-    <text x="256" y="328" font-family="'Noto Serif TC', serif" font-size="320" font-weight="900" fill="#8B2A1B" text-anchor="middle">漫</text>
-    <text x="256" y="430" font-family="'JetBrains Mono', monospace" font-size="32" font-weight="600" fill="#B58E3F" text-anchor="middle" letter-spacing="8">LEDGER</text>
+    <!-- 「漫」字：font 240、置中、safe zone 80% 內、不會被 iOS 圓角切 -->
+    <text x="256" y="335"
+          font-family="'Noto Serif TC', serif"
+          font-size="240"
+          font-weight="900"
+          fill="#8B2A1B"
+          text-anchor="middle">漫</text>
   </svg>
 </div>
 </body></html>
