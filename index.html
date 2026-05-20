@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#1A1814" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>漫途記帳 · Venturo Ledger</title>
+<meta name="description" content="漫途公司內部記帳 — 個人 / 公司雙模式、Supabase 雲端同步" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=Noto+Serif+TC:wght@300..900&family=JetBrains+Mono:wght@300..800&display=swap" rel="stylesheet">
+
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="./config.js"></script>
+
+<style>
+  :root {
+    --paper: #F4EFE5;
+    --paper-2: #EAE3D2;
+    --paper-3: #ECDFC6;
+    --ink: #1A1814;
+    --ink-soft: #4A4239;
+    --ink-faded: #8A7F70;
+    --rule: #D6CDB8;
+    --rule-soft: #E5DCC7;
+    --venturo-red: #8B2A1B;
+    --venturo-red-warm: #B73C25;
+    --moss: #3D4F3D;
+    --moss-soft: #6F8470;
+    --gold: #B58E3F;
+
+    --display: "Fraunces", "Noto Serif TC", "PingFang TC", serif;
+    --display-cn: "Noto Serif TC", "Fraunces", "PingFang TC", serif;
+    --body: "PingFang TC", "Helvetica Neue", system-ui, -apple-system, sans-serif;
+    --mono: "JetBrains Mono", "PingFang TC", "SF Mono", Menlo, monospace;
+
+    --phone-w: 430px;
+    --phone-h: 880px;
+    --bezel: 14px;
+    --r-outer: 56px;
+    --r-inner: 42px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  button { font-family: inherit; }
+  input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+
+  body {
+    font-family: var(--body);
+    color: var(--ink);
+    background: #2B2823;
+    background-image:
+      radial-gradient(circle at 25% 20%, rgba(181,142,63,0.10) 0%, transparent 45%),
+      radial-gradient(circle at 75% 80%, rgba(139,42,27,0.12) 0%, transparent 50%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(20px, 4vw, 56px) 16px;
+  }
+
+  ::selection { background: var(--venturo-red); color: var(--paper); }
+
+  /* ─────────────────────────────── PHONE FRAME ─────────────────────────────── */
+  .stage { position: relative; display: flex; align-items: flex-start; justify-content: center; width: 100%; }
+  .stage::before, .stage::after {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(244, 239, 229, 0.32);
+    white-space: nowrap;
+  }
+  .stage::before { content: "漫途 · 記帳"; top: -34px; left: 50%; transform: translateX(-50%); }
+  .stage::after { content: "Venturo Ledger · Internal"; bottom: -34px; left: 50%; transform: translateX(-50%); }
+
+  .phone {
+    width: var(--phone-w);
+    max-width: 100%;
+    background: #0A0908;
+    border-radius: var(--r-outer);
+    padding: var(--bezel);
+    box-shadow:
+      0 0 0 1.5px rgba(244, 239, 229, 0.06) inset,
+      0 0 0 2px rgba(0,0,0,0.4),
+      0 60px 90px -30px rgba(0,0,0,0.55),
+      0 20px 40px -15px rgba(0,0,0,0.4);
+    position: relative;
+  }
+  .phone::before {
+    content: "";
+    position: absolute; left: -2px; top: 140px;
+    width: 3px; height: 50px;
+    background: #161310; border-radius: 2px 0 0 2px;
+    box-shadow: 0 70px 0 #161310, 0 130px 0 #161310;
+  }
+  .phone::after {
+    content: "";
+    position: absolute; right: -2px; top: 160px;
+    width: 3px; height: 80px;
+    background: #161310; border-radius: 0 2px 2px 0;
+  }
+
+  .screen {
+    background: var(--paper);
+    border-radius: var(--r-inner);
+    overflow: hidden;
+    position: relative;
+    height: var(--phone-h);
+    max-height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.09 0 0 0 0 0.08 0 0 0 0.035 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* iOS 狀態列 */
+  .status-bar {
+    height: 44px;
+    padding: 0 28px 0 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink);
+    flex-shrink: 0;
+    z-index: 5;
+    font-variant-numeric: tabular-nums;
+  }
+  .status-bar .right { display: flex; align-items: center; gap: 6px; }
+  .status-bar svg { width: 17px; height: 11px; display: block; }
+  .status-bar .battery {
+    width: 26px; height: 12px;
+    border: 1.2px solid var(--ink);
+    border-radius: 3px; position: relative; display: inline-block;
+  }
+  .status-bar .battery::before { content: ""; position: absolute; right: -3.5px; top: 50%; width: 2px; height: 5px; background: var(--ink); border-radius: 0 1.5px 1.5px 0; transform: translateY(-50%); }
+  .status-bar .battery::after { content: ""; position: absolute; left: 1.5px; top: 1.5px; bottom: 1.5px; width: 70%; background: var(--ink); border-radius: 1px; }
+  .notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 95px; height: 28px; background: #0A0908; border-radius: 999px; z-index: 10; }
+
+  /* ─────────────────────────────── AUTH SCREEN ─────────────────────────────── */
+  .auth-wrap {
+    flex: 1;
+    padding: 32px 28px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 24px;
+  }
+  .auth-brand {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .auth-brand .mark {
+    font-family: var(--display-cn);
+    font-weight: 700;
+    font-size: 40px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .auth-brand .mark em {
+    font-family: var(--display-cn);
+    color: var(--venturo-red);
+    font-style: normal;
+    font-weight: 500;
+    margin: 0 4px;
+  }
+  .auth-brand .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    margin-top: 10px;
+    display: block;
+  }
+  .auth-brand .deck {
+    font-family: var(--display-cn);
+    font-style: normal;
+    font-weight: 400;
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin-top: 12px;
+    line-height: 1.55;
+  }
+
+  .auth-tabs {
+    display: flex;
+    background: var(--paper-2);
+    border-radius: 14px;
+    padding: 4px;
+    position: relative;
+  }
+  .auth-tabs button {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    padding: 12px 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: color 240ms ease, background 240ms ease;
+    position: relative;
+    z-index: 2;
+  }
+  .auth-tabs button.active {
+    color: var(--paper);
+    background: var(--ink);
+    box-shadow: 0 6px 12px -6px rgba(26,24,20,0.4);
+  }
+
+  .auth-form { display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    font-weight: 600;
+  }
+  .field input {
+    border: 1.5px solid var(--rule);
+    background: var(--paper);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 200ms ease, background 200ms ease;
+  }
+  .field input:focus { border-color: var(--ink); background: var(--paper-2); }
+  .field input::placeholder { color: var(--ink-faded); }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    border: 0;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 200ms ease, transform 160ms ease;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { background: var(--venturo-red); }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.5; cursor: wait; }
+
+  .auth-msg {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 10px 14px;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 1.4;
+    min-height: 0;
+  }
+  .auth-msg.error { background: rgba(139,42,27,0.1); color: var(--venturo-red); border: 1px solid rgba(139,42,27,0.2); }
+  .auth-msg.success { background: rgba(61,79,61,0.1); color: var(--moss); border: 1px solid rgba(61,79,61,0.25); }
+  .auth-msg.hidden { display: none; }
+
+  .auth-foot {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    margin-top: auto;
+    padding-top: 24px;
+  }
+  .auth-foot em { color: var(--venturo-red); font-family: var(--display-cn); font-style: normal; font-weight: 500; text-transform: none; letter-spacing: 0; }
+
+  /* ─────────────────────────────── MAIN APP ─────────────────────────────── */
+  .scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding-bottom: 120px;
+    scrollbar-width: none;
+  }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  .topbar {
+    padding: 8px 20px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 6px; }
+  .brand .mark {
+    font-family: var(--display-cn);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .brand .mark em {
+    font-family: var(--display-cn);
+    color: var(--venturo-red);
+    font-style: normal;
+    font-weight: 500;
+    margin: 0 2px;
+  }
+  .brand .tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
+
+  .mode-toggle {
+    display: inline-flex;
+    background: var(--paper-2);
+    border-radius: 999px;
+    padding: 3px;
+    position: relative;
+    border: 1px solid var(--rule);
+  }
+  .mode-toggle button {
+    border: 0; background: transparent;
+    padding: 7px 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    transition: color 280ms ease;
+    font-weight: 600;
+  }
+  .mode-toggle button.active { color: var(--paper); }
+  .mode-toggle::before {
+    content: "";
+    position: absolute;
+    top: 3px; bottom: 3px; left: 3px;
+    width: calc(50% - 3px);
+    background: var(--ink);
+    border-radius: 999px;
+    transition: transform 360ms cubic-bezier(0.3, 0, 0.2, 1), background 320ms ease;
+    z-index: 1;
+  }
+  .mode-toggle.is-personal::before { transform: translateX(0); background: var(--moss); }
+  .mode-toggle.is-company::before { transform: translateX(100%); background: var(--venturo-red); }
+
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 180ms ease, color 180ms ease, transform 160ms ease;
+  }
+  .icon-btn:hover { background: var(--ink); color: var(--paper); }
+  .icon-btn:active { transform: scale(0.92); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  .month-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 20px 16px;
+  }
+  .month-switch .label { text-align: center; line-height: 1.1; }
+  .month-switch .label .yr {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+  }
+  .month-switch .label .m {
+    font-family: var(--display-cn);
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    margin-top: 2px;
+  }
+  .month-switch .label .m em {
+    font-family: var(--display-cn);
+    font-weight: 700;
+    color: var(--venturo-red);
+    font-style: normal;
+    margin-right: 4px;
+  }
+
+  .hero-kpi {
+    margin: 4px 16px 18px;
+    border-radius: 26px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 22px 24px 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 12px 24px -16px rgba(26,24,20,0.4);
+  }
+  .hero-kpi::before {
+    content: "";
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(181,142,63,0.22) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-kpi .hk-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .hero-kpi .hk-amt {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 52px;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    position: relative;
+    font-variation-settings: "opsz" 144;
+  }
+  .hero-kpi .hk-amt .cur {
+    font-size: 0.42em;
+    font-weight: 300;
+    color: rgba(244,239,229,0.6);
+    vertical-align: 0.55em;
+    margin-right: 4px;
+  }
+  .hero-kpi .hk-amt.neg { color: var(--venturo-red-warm); }
+  .hero-kpi .hk-meta {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(244,239,229,0.72);
+    letter-spacing: 0.04em;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mini-kpis {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 16px;
+    margin-bottom: 18px;
+  }
+  .mk {
+    background: var(--paper-2);
+    border-radius: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--rule-soft);
+  }
+  .mk .mk-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    margin-bottom: 4px;
+  }
+  .mk .mk-amt {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .mk .mk-amt .cur {
+    font-size: 0.5em;
+    font-weight: 300;
+    color: var(--ink-soft);
+    vertical-align: 0.4em;
+    margin-right: 2px;
+  }
+  .mk.income .mk-amt { color: var(--moss); }
+  .mk.expense .mk-amt { color: var(--venturo-red); }
+  .mk .mk-sub {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--ink-faded);
+    margin-top: 4px;
+    letter-spacing: 0.06em;
+  }
+
+  .section-title {
+    padding: 18px 20px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .section-title h3 {
+    font-family: var(--display-cn);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .section-title .count {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+  }
+
+  /* records list */
+  .records {
+    margin: 0 16px 18px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .record {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--rule-soft);
+    transition: background 160ms ease, padding 160ms ease;
+    cursor: pointer;
+  }
+  .record:last-child { border-bottom: 0; }
+  .record:active { background: var(--paper-2); padding-left: 18px; }
+  .record .icon {
+    width: 36px; height: 36px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--paper);
+    flex-shrink: 0;
+  }
+  .record.income .icon { background: var(--moss); }
+  .record.fixed .icon { background: var(--ink); }
+  .record.adhoc .icon { background: var(--venturo-red); }
+
+  .record .info { min-width: 0; }
+  .record .info .name {
+    font-family: var(--body);
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .record .info .meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--ink-faded);
+    margin-top: 3px;
+    text-transform: uppercase;
+  }
+  .record .info .meta .sep { color: var(--rule); margin: 0 4px; }
+  .record .amt {
+    text-align: right;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .record.income .amt { color: var(--moss); }
+  .record.fixed .amt { color: var(--ink-soft); }
+  .record.adhoc .amt { color: var(--venturo-red); }
+
+  /* empty state */
+  .empty {
+    margin: 0 16px 18px;
+    padding: 44px 20px;
+    background: var(--paper);
+    border: 1.5px dashed var(--rule);
+    border-radius: 20px;
+    text-align: center;
+  }
+  .empty .em-mark {
+    font-family: var(--display);
+    font-weight: 300;
+    font-size: 72px;
+    line-height: 1;
+    color: var(--venturo-red);
+    opacity: 0.45;
+    margin-bottom: 12px;
+    font-variation-settings: "opsz" 144, "SOFT" 80;
+  }
+  .empty h4 {
+    font-family: var(--display-cn);
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .empty p {
+    font-family: var(--body);
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+  .empty p em {
+    color: var(--venturo-red);
+    font-family: var(--display);
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  /* ─────────────────────────────── HOME INDICATOR + FAB ─────────────────────────────── */
+  .home-indicator {
+    position: absolute;
+    bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 138px; height: 5px;
+    background: var(--ink);
+    border-radius: 3px;
+    opacity: 0.85;
+    z-index: 10;
+  }
+
+  .fab {
+    position: absolute;
+    right: 18px;
+    bottom: 28px;
+    z-index: 9;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    border: 0;
+    cursor: pointer;
+    box-shadow: 0 12px 24px -8px rgba(26,24,20,0.45);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 280ms cubic-bezier(0.3, 0, 0.2, 1), background 240ms ease, box-shadow 240ms ease;
+  }
+  .fab:hover, .fab:focus-visible {
+    background: var(--venturo-red);
+    transform: translateY(-2px) rotate(90deg);
+    box-shadow: 0 18px 32px -10px rgba(139,42,27,0.5);
+    outline: none;
+  }
+  .fab:active { transform: scale(0.94); }
+  .fab svg { width: 26px; height: 26px; }
+
+  /* ─────────────────────────────── BOTTOM SHEET（新增記錄）─────────────────────────────── */
+  .sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 9, 8, 0.55);
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms ease;
+    border-radius: var(--r-inner);
+  }
+  .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: var(--paper);
+    border-radius: 28px 28px 0 0;
+    z-index: 21;
+    transform: translateY(100%);
+    transition: transform 360ms cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow: 0 -20px 40px -20px rgba(0,0,0,0.3);
+    max-height: 86%;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .sheet.open { transform: translateY(0); }
+
+  .sheet-grabber {
+    width: 38px; height: 5px;
+    background: var(--rule);
+    border-radius: 3px;
+    margin: 10px auto 4px;
+    flex-shrink: 0;
+  }
+
+  .sheet-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px 8px;
+    flex-shrink: 0;
+  }
+  .sheet-head h3 {
+    font-family: var(--display-cn);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .sheet-close {
+    border: 0;
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  .sheet-body { padding: 8px 20px 20px; overflow-y: auto; flex: 1; }
+
+  .kind-pills {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    background: var(--paper-2);
+    padding: 4px;
+    border-radius: 14px;
+    margin-bottom: 18px;
+  }
+  .kind-pills button {
+    border: 0;
+    background: transparent;
+    padding: 11px 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background 240ms ease, color 240ms ease;
+  }
+  .kind-pills button.active {
+    background: var(--ink);
+    color: var(--paper);
+    box-shadow: 0 4px 10px -4px rgba(26,24,20,0.4);
+  }
+  .kind-pills button[data-kind="income"].active { background: var(--moss); }
+  .kind-pills button[data-kind="adhoc"].active { background: var(--venturo-red); }
+
+  .amt-input {
+    text-align: center;
+    margin: 16px 0;
+  }
+  .amt-input .cur {
+    font-family: var(--display);
+    font-weight: 400;
+    color: var(--ink-faded);
+    font-size: 18px;
+    margin-right: 4px;
+    vertical-align: 0.4em;
+  }
+  .amt-input input {
+    width: 60%;
+    border: 0;
+    border-bottom: 2px solid var(--rule);
+    background: transparent;
+    text-align: center;
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 44px;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    padding: 4px 0;
+    font-variant-numeric: tabular-nums;
+    font-variation-settings: "opsz" 144;
+    outline: none;
+    transition: border-color 200ms ease;
+  }
+  .amt-input input:focus { border-bottom-color: var(--ink); }
+  .amt-input .hint {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .cat-grid button {
+    border: 1.5px solid var(--rule);
+    background: var(--paper);
+    padding: 11px 8px;
+    border-radius: 12px;
+    font-family: var(--body);
+    font-weight: 500;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 200ms ease;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .cat-grid button.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .sheet-foot {
+    padding: 14px 20px env(safe-area-inset-bottom, 16px);
+    border-top: 1px solid var(--rule);
+    background: var(--paper-2);
+    flex-shrink: 0;
+  }
+  .sheet-foot .btn-primary { width: 100%; margin-top: 0; }
+
+  /* ─────────────────────────────── ANIMATION ─────────────────────────────── */
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .reveal { animation: rise 0.6s cubic-bezier(0.2, 0, 0.2, 1) both; }
+
+  /* loader spinner */
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--rule);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─────────────────────────────── 手機尺寸：脫殼 ─────────────────────────────── */
+  @media (max-width: 480px) {
+    body { padding: 0; background: var(--paper); }
+    .stage::before, .stage::after { display: none; }
+    .phone {
+      padding: 0; border-radius: 0; box-shadow: none;
+      background: var(--paper); width: 100%;
+    }
+    .phone::before, .phone::after { display: none; }
+    .notch { display: none; }
+    .screen { border-radius: 0; height: 100vh; max-height: 100vh; }
+    .home-indicator { display: none; }
+    .sheet-backdrop, .sheet { border-radius: 0; }
+    .sheet { border-radius: 28px 28px 0 0; }
+    .status-bar { padding-top: env(safe-area-inset-top, 0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+
+      <!-- iOS 狀態列 -->
+      <div class="status-bar">
+        <div class="time">9:41</div>
+        <div class="right">
+          <svg viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.6"/><rect x="4.5" y="5" width="3" height="6" rx="0.6"/><rect x="9" y="3" width="3" height="8" rx="0.6"/><rect x="13.5" y="0" width="3" height="11" rx="0.6"/></svg>
+          <svg viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.4" style="margin-left: 2px;">
+            <path d="M2 5 Q8 0 14 5" stroke-linecap="round"/>
+            <path d="M4 7 Q8 4 12 7" stroke-linecap="round"/>
+            <circle cx="8" cy="10" r="1" fill="currentColor"/>
+          </svg>
+          <div class="battery"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ AUTH SCREEN ═══════════════════ -->
+      <div id="auth-screen" class="auth-wrap">
+        <div class="auth-brand">
+          <div class="mark">漫途<em>·</em>記帳</div>
+          <span class="tag">Venturo Ledger</span>
+          <div class="deck">記下每一筆、看見每個月的呼吸。</div>
+        </div>
+
+        <div class="auth-tabs">
+          <button id="tab-login" class="active" data-tab="login">登入</button>
+          <button id="tab-signup" data-tab="signup">註冊</button>
+        </div>
+
+        <form class="auth-form" id="auth-form" autocomplete="on">
+          <div class="field">
+            <label for="auth-email">Email</label>
+            <input type="email" id="auth-email" required placeholder="you@venturo.tw" autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="auth-pw">密碼</label>
+            <input type="password" id="auth-pw" required minlength="6" placeholder="至少 6 個字" autocomplete="current-password" />
+          </div>
+          <div id="auth-msg" class="auth-msg hidden"></div>
+          <button type="submit" id="auth-submit" class="btn-primary">登入</button>
+        </form>
+
+        <div class="auth-foot">
+          漫途自家用 <em>·</em> 資料只你看得到
+        </div>
+      </div>
+
+      <!-- ═══════════════════ MAIN APP ═══════════════════ -->
+      <div id="main-app" style="display: none; flex: 1; flex-direction: column; min-height: 0;">
+        <div class="scroll">
+
+          <!-- 頂列 -->
+          <div class="topbar">
+            <div class="brand">
+              <span class="mark">漫途<em>·</em>記帳</span>
+              <span class="tag" id="user-tag"></span>
+            </div>
+            <div class="topbar-right">
+              <div class="mode-toggle is-company" id="modeToggle">
+                <button data-mode="personal">個人</button>
+                <button data-mode="company" class="active">公司</button>
+              </div>
+              <button class="icon-btn" id="logout-btn" aria-label="登出" title="登出">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 月份切換 -->
+          <div class="month-switch">
+            <button class="icon-btn" id="prev-month" aria-label="上個月">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="label">
+              <div class="yr" id="cur-year">2026</div>
+              <div class="m"><em id="cur-month-num">五</em>月</div>
+            </div>
+            <button class="icon-btn" id="next-month" aria-label="下個月">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+          <!-- HERO KPI -->
+          <div class="hero-kpi">
+            <div class="hk-label">本月淨流入 · NET</div>
+            <div class="hk-amt" id="net-amt"><span class="cur">NT$</span>0</div>
+            <div class="hk-meta" id="net-meta">本月還沒記錄</div>
+          </div>
+
+          <!-- 雙欄 -->
+          <div class="mini-kpis">
+            <div class="mk income">
+              <div class="mk-label">本月收入</div>
+              <div class="mk-amt" id="income-amt"><span class="cur">NT$</span>0</div>
+              <div class="mk-sub" id="income-sub">0 筆</div>
+            </div>
+            <div class="mk expense">
+              <div class="mk-label">本月支出</div>
+              <div class="mk-amt" id="expense-amt"><span class="cur">NT$</span>0</div>
+              <div class="mk-sub" id="expense-sub">0 筆</div>
+            </div>
+          </div>
+
+          <!-- 記錄清單 -->
+          <div class="section-title">
+            <h3>本月記錄</h3>
+            <span class="count" id="record-count">0 筆</span>
+          </div>
+
+          <div id="records-container">
+            <!-- 動態填入：.records 或 .empty -->
+          </div>
+
+        </div>
+
+        <!-- FAB -->
+        <button class="fab" id="addFab" aria-label="新增記錄">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+
+        <div class="home-indicator"></div>
+      </div>
+
+      <!-- ═══════════════════ NEW RECORD SHEET ═══════════════════ -->
+      <div class="sheet-backdrop" id="sheet-backdrop"></div>
+      <div class="sheet" id="record-sheet">
+        <div class="sheet-grabber"></div>
+        <div class="sheet-head">
+          <h3>新增記錄</h3>
+          <button class="sheet-close" id="sheet-close">取消</button>
+        </div>
+        <div class="sheet-body">
+          <!-- kind 三選一 -->
+          <div class="kind-pills" id="kind-pills">
+            <button type="button" data-kind="income">收入</button>
+            <button type="button" data-kind="fixed" class="active">固定支出</button>
+            <button type="button" data-kind="adhoc">突發支出</button>
+          </div>
+
+          <!-- 金額 -->
+          <div class="amt-input">
+            <span class="cur">NT$</span>
+            <input type="number" id="amt-field" inputmode="numeric" placeholder="0" min="1" step="1" />
+            <span class="hint">金額 · 一律輸入正數</span>
+          </div>
+
+          <!-- 描述 -->
+          <div class="field">
+            <label>描述</label>
+            <input type="text" id="desc-field" maxlength="80" placeholder="例：午餐 / Vultr 機房 / 寶島之旅月費" />
+          </div>
+
+          <!-- 分類 -->
+          <div class="section-title" style="padding: 16px 0 8px;">
+            <h3 style="font-size: 14px;">分類</h3>
+            <span class="count" id="cat-count">挑一個</span>
+          </div>
+          <div class="cat-grid" id="cat-grid">
+            <!-- 動態填入 -->
+          </div>
+
+          <!-- 日期 -->
+          <div class="field">
+            <label>日期</label>
+            <input type="date" id="date-field" />
+          </div>
+        </div>
+        <div class="sheet-foot">
+          <button class="btn-primary" id="save-record">儲存記錄</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// 漫途記帳 · 主邏輯
+// ════════════════════════════════════════════════════════════════════
+
+const CONFIG = window.LEDGER_CONFIG || {};
+if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) {
+  console.error('config.js 未載入 / 缺欄位');
+  document.body.innerHTML = '<div style="padding: 40px; text-align: center; color: white; font-family: serif;">config.js 未正確載入<br/>請聯絡管理員</div>';
+}
+
+const sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storage: window.localStorage,
+    storageKey: 'venturo-ledger-auth',
+  },
+  db: { schema: 'ledger' },
+});
+
+// ─────── State ───────
+const state = {
+  user: null,
+  mode: localStorage.getItem('ledger-mode') || 'company',
+  curYear: new Date().getFullYear(),
+  curMonth: new Date().getMonth() + 1, // 1-12
+  records: [],
+  categories: [],
+  authMode: 'login', // login | signup
+  newRecord: { kind: 'fixed', amount: '', description: '', category_id: null, occurred_on: new Date().toISOString().slice(0, 10) },
+};
+
+const MONTH_CN = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+
+// ─────── DOM ───────
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+const authScreen = $('#auth-screen');
+const mainApp = $('#main-app');
+const authForm = $('#auth-form');
+const authEmail = $('#auth-email');
+const authPw = $('#auth-pw');
+const authSubmit = $('#auth-submit');
+const authMsg = $('#auth-msg');
+
+// ─────── Auth ───────
+function showAuth() {
+  authScreen.style.display = 'flex';
+  mainApp.style.display = 'none';
+}
+function showApp() {
+  authScreen.style.display = 'none';
+  mainApp.style.display = 'flex';
+}
+function setAuthMsg(text, type) {
+  if (!text) { authMsg.classList.add('hidden'); return; }
+  authMsg.classList.remove('hidden', 'error', 'success');
+  authMsg.classList.add(type || 'error');
+  authMsg.textContent = text;
+}
+
+// Tab switch
+$$('.auth-tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.authMode = btn.dataset.tab;
+    $$('.auth-tabs button').forEach(b => b.classList.toggle('active', b === btn));
+    authSubmit.textContent = state.authMode === 'login' ? '登入' : '註冊';
+    authPw.setAttribute('autocomplete', state.authMode === 'login' ? 'current-password' : 'new-password');
+    setAuthMsg('');
+  });
+});
+
+authForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = authEmail.value.trim();
+  const pw = authPw.value;
+  if (!email || !pw) return;
+
+  authSubmit.disabled = true;
+  setAuthMsg('');
+  try {
+    if (state.authMode === 'login') {
+      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      if (error) throw error;
+      // 自動進主畫面（onAuthStateChange 處理）
+    } else {
+      const { data, error } = await sb.auth.signUp({ email, password: pw });
+      if (error) throw error;
+      if (!data.session) {
+        setAuthMsg('註冊成功、請收 email 確認後再登入', 'success');
+        authSubmit.disabled = false;
+        return;
+      }
+    }
+  } catch (err) {
+    setAuthMsg(translateError(err.message), 'error');
+    authSubmit.disabled = false;
+  }
+});
+
+function translateError(msg) {
+  const m = (msg || '').toLowerCase();
+  if (m.includes('invalid login')) return '帳號或密碼錯誤';
+  if (m.includes('user already')) return '這個 email 已經註冊、改點「登入」';
+  if (m.includes('password should')) return '密碼至少 6 個字';
+  if (m.includes('rate limit')) return '太頻繁、等一下再試';
+  return msg || '出錯了、再試一次';
+}
+
+// Logout
+$('#logout-btn').addEventListener('click', async () => {
+  if (!confirm('確定要登出嗎？')) return;
+  await sb.auth.signOut();
+});
+
+// ─────── Auth state listener ───────
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    state.user = session.user;
+    $('#user-tag').textContent = state.user.email?.split('@')[0] || '';
+    showApp();
+    await loadCategories();
+    await loadRecords();
+  } else {
+    state.user = null;
+    showAuth();
+  }
+});
+
+// 初始檢查
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    state.user = session.user;
+    $('#user-tag').textContent = state.user.email?.split('@')[0] || '';
+    showApp();
+    await loadCategories();
+    await loadRecords();
+  } else {
+    showAuth();
+  }
+})();
+
+// ─────── Mode toggle ───────
+const modeToggle = $('#modeToggle');
+modeToggle.classList.add(state.mode === 'personal' ? 'is-personal' : 'is-company');
+modeToggle.querySelectorAll('button').forEach(b => {
+  b.classList.toggle('active', b.dataset.mode === state.mode);
+});
+modeToggle.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    state.mode = btn.dataset.mode;
+    localStorage.setItem('ledger-mode', state.mode);
+    modeToggle.classList.remove('is-personal', 'is-company');
+    modeToggle.classList.add(state.mode === 'personal' ? 'is-personal' : 'is-company');
+    modeToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    renderCategories();
+    await loadRecords();
+  });
+});
+
+// ─────── 月份切換 ───────
+function updateMonthLabel() {
+  $('#cur-year').textContent = state.curYear;
+  $('#cur-month-num').textContent = MONTH_CN[state.curMonth - 1];
+}
+updateMonthLabel();
+
+$('#prev-month').addEventListener('click', async () => {
+  state.curMonth--;
+  if (state.curMonth < 1) { state.curMonth = 12; state.curYear--; }
+  updateMonthLabel();
+  await loadRecords();
+});
+$('#next-month').addEventListener('click', async () => {
+  state.curMonth++;
+  if (state.curMonth > 12) { state.curMonth = 1; state.curYear++; }
+  updateMonthLabel();
+  await loadRecords();
+});
+
+// ─────── Categories ───────
+async function loadCategories() {
+  const { data, error } = await sb.from('categories').select('*').eq('is_active', true).order('sort_order');
+  if (error) { console.error('load categories', error); return; }
+  state.categories = data || [];
+  renderCategories();
+}
+
+function getActiveCategories() {
+  return state.categories.filter(c =>
+    c.kind === state.newRecord.kind &&
+    (c.mode === state.mode || c.mode === 'both')
+  );
+}
+
+function renderCategories() {
+  const grid = $('#cat-grid');
+  const cats = getActiveCategories();
+  grid.innerHTML = cats.map(c => `
+    <button type="button" data-cat-id="${c.id}" ${c.id === state.newRecord.category_id ? 'class="active"' : ''}>
+      ${escapeHtml(c.name)}
+    </button>
+  `).join('') || '<div style="grid-column: 1/-1; text-align: center; color: var(--ink-faded); font-size: 13px; padding: 12px;">這個模式還沒有分類</div>';
+
+  grid.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.newRecord.category_id = btn.dataset.catId;
+      grid.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      $('#cat-count').textContent = '已選 ' + btn.textContent.trim();
+    });
+  });
+}
+
+// ─────── Records ───────
+function monthBounds(y, m) {
+  const start = `${y}-${String(m).padStart(2, '0')}-01`;
+  const endDate = new Date(y, m, 0).getDate();
+  const end = `${y}-${String(m).padStart(2, '0')}-${String(endDate).padStart(2, '0')}`;
+  return { start, end };
+}
+
+async function loadRecords() {
+  const { start, end } = monthBounds(state.curYear, state.curMonth);
+  const { data, error } = await sb
+    .from('records')
+    .select('*')
+    .eq('mode', state.mode)
+    .gte('occurred_on', start)
+    .lte('occurred_on', end)
+    .order('occurred_on', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) { console.error('load records', error); return; }
+  state.records = data || [];
+  renderRecords();
+}
+
+function renderRecords() {
+  const container = $('#records-container');
+  const records = state.records;
+
+  // 計算匯總
+  let income = 0, expense = 0, incomeCnt = 0, expenseCnt = 0;
+  records.forEach(r => {
+    const amt = Number(r.amount);
+    if (r.kind === 'income') { income += amt; incomeCnt++; }
+    else { expense += amt; expenseCnt++; }
+  });
+  const net = income - expense;
+
+  $('#net-amt').innerHTML = `<span class="cur">NT$</span>${fmt(Math.abs(net))}`;
+  $('#net-amt').classList.toggle('neg', net < 0);
+  $('#net-meta').textContent = records.length === 0
+    ? '本月還沒記錄、按右下「+」開始'
+    : `${records.length} 筆 · ${net >= 0 ? '正流入' : '負流入'}`;
+  $('#income-amt').innerHTML = `<span class="cur">NT$</span>${fmt(income)}`;
+  $('#income-sub').textContent = `${incomeCnt} 筆`;
+  $('#expense-amt').innerHTML = `<span class="cur">NT$</span>${fmt(expense)}`;
+  $('#expense-sub').textContent = `${expenseCnt} 筆`;
+  $('#record-count').textContent = `${records.length} 筆`;
+
+  if (records.length === 0) {
+    container.innerHTML = `
+      <div class="empty reveal">
+        <div class="em-mark">·</div>
+        <h4>${state.mode === 'personal' ? '個人' : '公司'}記帳本是空的</h4>
+        <p>還沒有任何記錄、按右下角「<em>+</em>」開始第一筆</p>
+      </div>`;
+    return;
+  }
+
+  const catMap = Object.fromEntries(state.categories.map(c => [c.id, c]));
+  container.innerHTML = `<div class="records reveal">` + records.map(r => {
+    const cat = catMap[r.category_id];
+    const sign = r.kind === 'income' ? '+' : '-';
+    const firstChar = (r.description || '?').trim().slice(0, 1).toUpperCase();
+    const day = r.occurred_on.slice(5).replace('-', '/');
+    return `
+      <div class="record ${r.kind}" data-id="${r.id}">
+        <div class="icon">${escapeHtml(firstChar)}</div>
+        <div class="info">
+          <div class="name">${escapeHtml(r.description)}</div>
+          <div class="meta">${day}<span class="sep">·</span>${escapeHtml(cat?.name || '未分類')}</div>
+        </div>
+        <div class="amt">${sign}${fmt(Number(r.amount))}</div>
+      </div>`;
+  }).join('') + `</div>`;
+
+  // 點 record 之後接編輯 / 長按刪除
+  container.querySelectorAll('.record').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      if (confirm('要刪除這筆記錄嗎？\n（編輯功能下版補）')) {
+        deleteRecord(id);
+      }
+    });
+  });
+}
+
+async function deleteRecord(id) {
+  const { error } = await sb.from('records').delete().eq('id', id);
+  if (error) { alert('刪不掉、訊息：' + error.message); return; }
+  await loadRecords();
+}
+
+function fmt(n) {
+  return Math.round(n).toLocaleString('en-US');
+}
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  }[ch]));
+}
+
+// ─────── Sheet（新增記錄） ───────
+const sheet = $('#record-sheet');
+const sheetBd = $('#sheet-backdrop');
+
+function openSheet() {
+  state.newRecord = { kind: 'fixed', amount: '', description: '', category_id: null, occurred_on: new Date().toISOString().slice(0, 10) };
+  $('#amt-field').value = '';
+  $('#desc-field').value = '';
+  $('#date-field').value = state.newRecord.occurred_on;
+  $('#cat-count').textContent = '挑一個';
+  $$('.kind-pills button').forEach(b => b.classList.toggle('active', b.dataset.kind === 'fixed'));
+  renderCategories();
+  sheet.classList.add('open');
+  sheetBd.classList.add('open');
+}
+function closeSheet() {
+  sheet.classList.remove('open');
+  sheetBd.classList.remove('open');
+}
+
+$('#addFab').addEventListener('click', openSheet);
+$('#sheet-close').addEventListener('click', closeSheet);
+sheetBd.addEventListener('click', closeSheet);
+
+$$('#kind-pills button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.newRecord.kind = btn.dataset.kind;
+    state.newRecord.category_id = null;
+    $$('#kind-pills button').forEach(b => b.classList.toggle('active', b === btn));
+    $('#cat-count').textContent = '挑一個';
+    renderCategories();
+  });
+});
+
+$('#amt-field').addEventListener('input', (e) => { state.newRecord.amount = e.target.value; });
+$('#desc-field').addEventListener('input', (e) => { state.newRecord.description = e.target.value; });
+$('#date-field').addEventListener('input', (e) => { state.newRecord.occurred_on = e.target.value; });
+
+$('#save-record').addEventListener('click', async () => {
+  const r = state.newRecord;
+  const amt = parseFloat(r.amount);
+  if (!amt || amt <= 0) { alert('金額要 > 0'); return; }
+  if (!r.description.trim()) { alert('描述不能空白'); return; }
+  if (!r.occurred_on) { alert('日期不能空白'); return; }
+
+  const payload = {
+    user_id: state.user.id,
+    mode: state.mode,
+    kind: r.kind,
+    amount: amt,
+    description: r.description.trim(),
+    category_id: r.category_id || null,
+    occurred_on: r.occurred_on,
+  };
+
+  $('#save-record').disabled = true;
+  const { error } = await sb.from('records').insert(payload);
+  $('#save-record').disabled = false;
+  if (error) { alert('存不進去、訊息：' + error.message); return; }
+  closeSheet();
+  await loadRecords();
+});
+
+// ─────── 即時時間 ───────
+function updateTime() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  $('.status-bar .time').textContent = `${hh}:${mm}`;
+}
+updateTime();
+setInterval(updateTime, 30000);
+
+</script>
+
+</body>
+</html>

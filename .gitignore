@@ -1,0 +1,6 @@
+# 真實 token 不進 git、由 envsubst 從 secrets 生成
+config.js
+
+# OS
+.DS_Store
+*.log
